@@ -1,0 +1,254 @@
+/**
+ * Colors: Solid
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-c-white: #ffffff;
+  --web-c-black: #000000;
+  --web-c-primary: #409eff;
+  --web-c-primary-light: #e5f7ee;
+  --web-c-width: 1366px;
+  --web-c-sidebar-width: 210px;
+  --web-c-min-width: 1156px;
+}
+
+/**
+ * Colors: Palette
+ *
+ * The primitive colors used for accent colors. These colors are referenced
+ * by functional colors such as "Text", "Background", or "Brand".
+ *
+ * Each colors have exact same color scale system with 3 levels of solid
+ * colors with different brightness, and 1 soft color.
+ * 
+ * - `XXX-1`: The most solid color used mainly for colored text. It must
+ *   satisfy the contrast ratio against when used on top of `XXX-soft`.
+ *
+ * - `XXX-2`: The color used mainly for hover state of the button.
+ *
+ * - `XXX-3`: The color for solid background, such as bg color of the button.
+ *    It must satisfy the contrast ratio with pure white (#ffffff) text on
+ *    top of it.
+ *
+ * - `XXX-soft`: The color used for subtle background such as custom container
+ *    or badges. It must satisfy the contrast ratio when putting `XXX-1` colors
+ *    on top of it.
+ *
+ *    The soft color must be semi transparent alpha channel. This is crucial
+ *    because it allows adding multiple "soft" colors on top of each other
+ *    to create a accent, such as when having inline code block inside
+ *    custom containers.
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-c-gray-1: #dddde3;
+  --web-c-gray-2: #e4e4e9;
+  --web-c-gray-3: #ebebef;
+  --web-c-gray-soft: rgba(142, 150, 170, 0.14);
+
+  --web-c-indigo-1: #3451b2;
+  --web-c-indigo-2: #3a5ccc;
+  --web-c-indigo-3: #5672cd;
+  --web-c-indigo-soft: rgba(100, 108, 255, 0.14);
+
+  --web-c-green-1: #18794e;
+  --web-c-green-2: #299764;
+  --web-c-green-3: #30a46c;
+  --web-c-green-soft: rgba(16, 185, 129, 0.14);
+
+  --web-c-yellow-1: #915930;
+  --web-c-yellow-2: #946300;
+  --web-c-yellow-3: #9f6a00;
+  --web-c-yellow-soft: rgba(234, 179, 8, 0.14);
+
+  --web-c-red-1: #b8272c;
+  --web-c-red-2: #d5393e;
+  --web-c-red-3: #e0575b;
+  --web-c-red-soft: rgba(244, 63, 94, 0.14);
+}
+
+/**
+ * Colors: Background
+ *
+ * - `bg`: The bg color used for main screen.
+ *
+ * - `bg-alt`: The alternative bg color used in places such as "sidebar",
+ *   or "code block".
+ *
+ * - `bg-elv`: The elevated bg color. This is used at parts where it "floats",
+ *   such as "dialog".
+ *
+ * - `bg-soft`: The bg color to slightly ditinguish some components from
+ *   the page. Used for things like "carbon ads" or "table".
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-c-bg: #eaf2ff;
+  --web-c-bg-alt: linear-gradient(185deg, #57af8d 0%, #399371 51%, #257355 100%);
+  --web-c-bg-alt-sub: linear-gradient(191deg, #ffffff 0%, #f9f9f9 100%);
+  --web-c-bg-elv: #ffffff;
+  --web-c-bg-soft: #f6f6f7;
+}
+
+/**
+ * Colors: Borders
+ *
+ * - `divider`: This is used for separators. This is used to divide sections
+ *   within the same components, such as having separator on "h2" heading.
+ *
+ * - `border`: This is designed for borders on interactive components.
+ *   For example this should be used for a button outline.
+ *
+ * - `gutter`: This is used to divide components in the page. For example
+ *   the header and the lest of the page.
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-c-border: #c2c2c4;
+  --web-c-divider: #e2e2e3;
+  --web-c-gutter: #e2e2e3;
+}
+
+/**
+ * Colors: Text
+ *
+ * - `text-1`: Used for primary text.
+ *
+ * - `text-2`: Used for muted texts, such as "inactive menu" or "info texts".
+ *
+ * - `text-3`: Used for subtle texts, such as "placeholders" or "caret icon".
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-c-text: #606266;
+  --web-c-text-1: rgba(60, 60, 67);
+  --web-c-text-2: rgba(60, 60, 67, 0.78);
+  --web-c-text-3: rgba(60, 60, 67, 0.56);
+}
+
+/**
+ * Colors: Function
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-c-default-1: var(--web-c-gray-1);
+  --web-c-default-2: var(--web-c-gray-2);
+  --web-c-default-3: var(--web-c-gray-3);
+  --web-c-default-soft: var(--web-c-gray-soft);
+
+  --web-c-brand-1: var(--web-c-indigo-1);
+  --web-c-brand-2: var(--web-c-indigo-2);
+  --web-c-brand-3: var(--web-c-indigo-3);
+  --web-c-brand-soft: var(--web-c-indigo-soft);
+
+  --web-c-tip-1: var(--web-c-brand-1);
+  --web-c-tip-2: var(--web-c-brand-2);
+  --web-c-tip-3: var(--web-c-brand-3);
+  --web-c-tip-soft: var(--web-c-brand-soft);
+
+  --web-c-warning-1: var(--web-c-yellow-1);
+  --web-c-warning-2: var(--web-c-yellow-2);
+  --web-c-warning-3: var(--web-c-yellow-3);
+  --web-c-warning-soft: var(--web-c-yellow-soft);
+
+  --web-c-danger-1: var(--web-c-red-1);
+  --web-c-danger-2: var(--web-c-red-2);
+  --web-c-danger-3: var(--web-c-red-3);
+  --web-c-danger-soft: var(--web-c-red-soft);
+}
+
+/**
+ * Typography
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-font-family-base: '微软雅黑', 'PingFang SC', 'Chinese Quotes', 'Inter var', 'Inter', ui-sans-serif, system-ui,
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, 'Noto Sans', sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --web-font-family-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+}
+
+/**
+ * Shadows
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --web-shadow-2: 0 3px 12px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.07);
+  --web-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
+  --web-shadow-4: 0 14px 44px rgba(0, 0, 0, 0.12), 0 3px 9px rgba(0, 0, 0, 0.12);
+  --web-shadow-5: 0 18px 56px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.16);
+}
+
+/**
+ * Z-indexes
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-z-index-footer: 10;
+  --web-z-index-local-nav: 20;
+  --web-z-index-nav: 30;
+  --web-z-index-layout-top: 40;
+  --web-z-index-backdrop: 50;
+  --web-z-index-sidebar: 60;
+}
+
+/**
+ * Layouts
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-layout-min-width: 320px;
+  --web-layout-max-width: 1440px;
+}
+
+/**
+ * Component: Header Anchor
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-header-header-height: 88px;
+}
+
+/**
+ * Component: Nav
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-nav-height: 64px;
+  --web-nav-bg-color: #f7fffb;
+  --web-nav-screen-bg-color: var(--web-c-bg);
+  --web-nav-logo-height: 24px;
+}
+
+/**
+ * Component: Sidebar
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-sidebar-bg-color: var(--web-c-bg-alt);
+  --web-sidebar-super-width: 72px;
+  --web-sidebar-super-border-radius: 24px;
+  --web-sidebar-sub-width: 188px;
+  --web-sidebar-sub-color: var(--web-c-text);
+  --web-sidebar-sub-bg-color: var(--web-c-bg-alt-sub);
+  --web-sidebar-sub-child-width: 934px;
+}
+
+/**
+ * Component: Footer
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-footer-bg-color: var(--web-c-bg-alt);
+  --web-footer-height: 32px;
+}
+
+/**
+ * Colors Backdrop
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --web-backdrop-bg-color: rgba(0, 0, 0, 0.6);
+}

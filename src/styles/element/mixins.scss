@@ -1,0 +1,41 @@
+/* 单行省略号 */
+@mixin ellipsis() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 多行省略号 */
+@mixin multi-ellipsis($row: 2) {
+  @if type-of($row) != 'number' {
+    @error '$row 必须是一个有效的数字';
+  }
+
+  display: -webkit-box;
+  -webkit-line-clamp: $row;
+  /* autoprefixer: ignore next */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin size($width, $height: $width) {
+  width: $width;
+  height: $height;
+}
+
+@mixin clearfix() {
+  &::after {
+    display: block;
+    clear: both;
+    content: '';
+  }
+}
+
+@mixin admin-box() {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  // margin-bottom: 10px;
+  min-height: 300px;
+}
