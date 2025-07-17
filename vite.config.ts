@@ -12,7 +12,7 @@ import vueDevTools from 'vite-plugin-vue-devtools';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './', // 设置为相对路径，支持本地直接访问
+  // base: './', // 设置为相对路径，支持本地直接访问
   plugins: [
     vue(),
     vueJsx(),
