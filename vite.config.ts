@@ -62,7 +62,7 @@ export default defineConfig({
     cors: true
   },
   build: {
-    outDir: 'baccarat',
+    outDir: 'docs',
     rollupOptions: {
       output: {
         chunkFileNames: 'assets/js/[name]-[hash].js',
