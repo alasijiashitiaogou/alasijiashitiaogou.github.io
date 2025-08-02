@@ -56,19 +56,46 @@
         </div>
       </div>
 
+      <!-- 搜索区域 -->
+      <div class="search-area">
+        <div class="search-container">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="输入关键字搜索"
+            class="search-input"
+            clearable
+            @keyup.enter="handleSearch"
+            @clear="clearSearch"
+          >
+            <template #append>
+              <el-button @click="handleSearch" :loading="searchLoading">
+                搜索
+              </el-button>
+            </template>
+          </el-input>
+        </div>
+      </div>
+
       <div
         class="card-display-area"
-        :style="{ height: `calc(100vh - ${cardHeight}px - 60px)` }"
+        :style="{ height: `calc(100vh - ${cardHeight}px - 60px - 60px)` }"
       >
+        <!-- 正常卡片展示 -->
         <div class="card-container">
           <div
             v-for="(card, idx) in displayedCards"
             :key="card.id"
+            :data-card-id="card.id"
             @click="clickHandler(card)"
             class="playing-card"
             :class="[
               { active: editCard === card.id },
-              isResult && isCardInActiveResult(idx) ? 'result-active-card' : ''
+              isResult && isCardInActiveResult(idx) ? 'result-active-card' : '',
+              isSearchMode && isCardInSearchResults(card)
+                ? isCardInContinuousSearch(card)
+                  ? 'search-highlight-continuous-card'
+                  : 'search-highlight-card'
+                : ''
             ]"
           >
             <div class="card-value">{{ card.display }}</div>
@@ -76,19 +103,15 @@
 
           <!-- 空状态提示 -->
           <div v-if="displayedCards.length === 0" class="empty-state">
-            请选择扑克牌
+            请录入信息
           </div>
         </div>
         <div class="h-46px w-100%"></div>
       </div>
-      <div
-        v-if="displayedCards.length > 0"
-        class="shuffle-button"
-        :style="{ bottom: `${cardHeight + 8}px` }"
-      >
+      <div class="shuffle-button" :style="{ bottom: `${cardHeight + 8}px` }">
         <el-button
           type="primary"
-          v-if="!isResult"
+          v-if="!isResult && displayedCards.length > 0"
           round
           class="w-100px"
           @click="shuffleCards"
@@ -102,23 +125,31 @@
           >修改</el-button
         >
         <el-button
-          v-if="isResult && cardHeight < 500"
-          type="warning"
-          round
-          class="w-100px ml-10px"
-          @click="cardHeight = 500"
-          >更高展示</el-button
-        >
-        <el-button
-          v-if="isResult && cardHeight > 400"
+          v-if="isResult && cardHeight < 400"
           type="warning"
           round
           class="w-100px ml-10px"
           @click="cardHeight = 400"
+          >更高展示</el-button
+        >
+        <el-button
+          v-if="isResult && cardHeight > 300"
+          type="warning"
+          round
+          class="w-100px ml-10px"
+          @click="cardHeight = 300"
           >恢复高度</el-button
         >
         <el-button
-          v-if="!isResult"
+          v-if="isResult"
+          type="warning"
+          round
+          class="w-100px ml-10px"
+          @click="copyAllCards"
+          >复制全部</el-button
+        >
+        <el-button
+          v-if="!isResult && displayedCards.length > 0"
           type="danger"
           round
           class="w-100px"
@@ -126,7 +157,7 @@
           >删除选中</el-button
         >
         <el-button
-          v-if="!isResult"
+          v-if="!isResult && displayedCards.length > 0"
           type="info"
           round
           class="w-100px"
@@ -134,12 +165,20 @@
           >删除此前</el-button
         >
         <el-button
-          v-if="!isResult"
+          v-if="!isResult && displayedCards.length > 0"
           type="warning"
           round
           class="w-100px ml-10px"
-          @click="deleteAfterCard"
-          >删除此后</el-button
+          @click="copyAllCards"
+          >复制全部</el-button
+        >
+        <el-button
+          v-if="!isResult && displayedCards.length === 0"
+          type="primary"
+          round
+          class="w-100px"
+          @click="openPasteDialog"
+          >粘贴数据</el-button
         >
       </div>
       <!-- 输入选项区域 -->
@@ -220,12 +259,50 @@
         </div>
       </div>
     </div>
+
+    <!-- 编辑弹窗 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      :title="editCardData ? '编辑扑克牌数据' : '粘贴数据'"
+      width="90%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="edit-dialog"
+    >
+      <div class="edit-dialog-content">
+        <el-input
+          v-model="editCardData"
+          type="textarea"
+          :rows="12"
+          :placeholder="
+            editCardData
+              ? '请输入扑克牌数据（例如：12345JQK）'
+              : '请粘贴或输入扑克牌数据（例如：12345JQK）'
+          "
+          class="edit-textarea"
+        />
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="cancelEdit" size="large">取消</el-button>
+          <el-button
+            type="primary"
+            @click="confirmEdit"
+            :loading="editLoading"
+            size="large"
+          >
+            完成
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, nextTick, onMounted, computed } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
+// 暂时移除图标导入，使用文字替代
 import { v4 as uuidv4 } from 'uuid';
 import { calculateHandValue, simulateBaccarat } from './baccarat.ts';
 
@@ -246,6 +323,17 @@ const loginForm = ref({
 });
 const loginLoading = ref(false);
 const loginError = ref('');
+
+// 搜索相关数据
+const searchKeyword = ref('');
+const searchLoading = ref(false);
+const searchResults = ref([]);
+const isSearchMode = ref(false);
+
+// 编辑弹窗相关数据
+const editDialogVisible = ref(false);
+const editCardData = ref('');
+const editLoading = ref(false);
 
 // 计算当前用户名
 const currentUser = computed(() => {
@@ -418,27 +506,36 @@ const deleteCard = () => {
   }
 };
 
-// 删除选中牌之后的所有牌（不包括选中这张）
-const deleteAfterCard = () => {
-  if (displayedCards.value.length === 0) return;
-  if (editCard.value) {
-    const index = displayedCards.value.findIndex(
-      card => card.id === editCard.value
-    );
-    if (index !== -1 && index < displayedCards.value.length - 1) {
-      ElMessageBox.confirm('确定要删除选中牌之后的所有牌吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-        .then(() => {
-          // 删除选中牌之后的所有牌（不包括选中这张）
-          displayedCards.value = displayedCards.value.slice(0, index + 1);
-          editCard.value = null;
-        })
-        .catch(() => {});
-    }
+// 复制全部已录入的扑克牌信息
+const copyAllCards = () => {
+  if (displayedCards.value.length === 0) {
+    ElMessage.warning('没有可复制的数据');
+    return;
   }
+
+  // 将所有扑克牌的值连接成字符串
+  const cardValues = displayedCards.value.map(card => card.display).join(' ');
+
+  // 复制到剪贴板
+  navigator.clipboard
+    .writeText(cardValues)
+    .then(() => {
+      ElMessage.success(
+        `已复制 ${displayedCards.value.length} 张牌的数据到剪贴板`
+      );
+    })
+    .catch(() => {
+      // 如果剪贴板API不可用，使用传统方法
+      const textArea = document.createElement('textarea');
+      textArea.value = cardValues;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      ElMessage.success(
+        `已复制 ${displayedCards.value.length} 张牌的数据到剪贴板`
+      );
+    });
 };
 
 const shuffleCards = () => {
@@ -479,9 +576,120 @@ const shuffleCards = () => {
 };
 
 const editCardHandler = () => {
+  // 将当前卡片数据转换为文本格式
+  editCardData.value = displayedCards.value.map(card => card.display).join(' ');
+  editDialogVisible.value = true;
+};
+
+// 确认编辑
+const confirmEdit = () => {
+  editLoading.value = true;
+
+  // 验证输入数据
+  const inputText = editCardData.value.trim();
+
+  if (!inputText) {
+    // 如果输入为空，清空所有卡片
+    displayedCards.value = [];
+    tableData.value = [];
+    isResult.value = false;
+    cardHeight.value = 300;
+    resultActiveIndex.value = null;
+    editDialogVisible.value = false;
+    editLoading.value = false;
+    ElMessage.success('已清空所有数据');
+    return;
+  }
+
+  // 解析输入的扑克牌数据 - 支持混合输入（空格分隔和连续输入）
+  let cardValues = [];
+
+  // 按空格分割，然后处理每个部分
+  const parts = inputText.split(/\s+/).filter(value => value.trim());
+
+  for (const part of parts) {
+    if (part.length === 1) {
+      // 单个字符，直接添加
+      const char = part.toUpperCase();
+      if (
+        ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'J', 'Q', 'K'].includes(
+          char
+        )
+      ) {
+        cardValues.push(char);
+      }
+    } else {
+      // 多个字符，需要按字符分割处理
+      const chars = part.split('');
+      for (let i = 0; i < chars.length; i++) {
+        const char = chars[i];
+        if (char === '1' && i + 1 < chars.length && chars[i + 1] === '0') {
+          // 处理"10"
+          cardValues.push('10');
+          i++; // 跳过下一个字符
+        } else if (
+          ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'J', 'Q', 'K'].includes(
+            char.toUpperCase()
+          )
+        ) {
+          cardValues.push(char.toUpperCase());
+        }
+      }
+    }
+  }
+
+  const validCards = [
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+    'J',
+    'Q',
+    'K'
+  ];
+
+  // 验证每张牌是否有效
+  const invalidCards = cardValues.filter(value => !validCards.includes(value));
+  if (invalidCards.length > 0) {
+    ElMessage.error(`无效的扑克牌数据: ${invalidCards.join(', ')}`);
+    editLoading.value = false;
+    return;
+  }
+
+  // 更新卡片数据
+  displayedCards.value = cardValues.map(value => ({
+    id: uuidv4(),
+    value: value.toUpperCase(),
+    display: value.toUpperCase()
+  }));
+
+  // 重置结果状态
+  tableData.value = [];
   isResult.value = false;
   cardHeight.value = 300;
   resultActiveIndex.value = null;
+
+  editDialogVisible.value = false;
+  editLoading.value = false;
+  ElMessage.success(`已更新 ${displayedCards.value.length} 张牌的数据`);
+};
+
+// 取消编辑
+const cancelEdit = () => {
+  editDialogVisible.value = false;
+  editCardData.value = '';
+};
+
+// 打开粘贴数据对话框
+const openPasteDialog = () => {
+  editCardData.value = '';
+  editDialogVisible.value = true;
 };
 
 // 判断某张牌是否属于当前高亮的结果行
@@ -583,6 +791,123 @@ const handleLogin = () => {
     }
     loginLoading.value = false;
   }, 500);
+};
+
+// 搜索功能
+const handleSearch = () => {
+  if (!searchKeyword.value.trim()) {
+    ElMessage.warning('请输入搜索关键字');
+    return;
+  }
+
+  searchLoading.value = true;
+  isSearchMode.value = true;
+
+  // 模拟搜索延迟
+  setTimeout(() => {
+    const keyword = searchKeyword.value.toLowerCase().trim();
+    const results = [];
+
+    // 搜索已录入的扑克牌
+    displayedCards.value.forEach((card, index) => {
+      // 检查单个卡片是否匹配搜索关键字
+      if (card.display.toLowerCase().includes(keyword)) {
+        results.push({
+          type: 'card',
+          index: index,
+          card: card,
+          display: `第${index + 1}张牌: ${card.display}`
+        });
+      }
+    });
+
+    // 搜索连续相邻的卡片模式
+    if (keyword.length > 1) {
+      const keywordChars = keyword.split('');
+
+      // 在卡片序列中查找连续匹配的模式
+      for (
+        let i = 0;
+        i <= displayedCards.value.length - keywordChars.length;
+        i++
+      ) {
+        let match = true;
+        for (let j = 0; j < keywordChars.length; j++) {
+          const cardDisplay = displayedCards.value[i + j].display.toLowerCase();
+          if (cardDisplay !== keywordChars[j]) {
+            match = false;
+            break;
+          }
+        }
+
+        if (match) {
+          // 为每个匹配的连续卡片添加结果
+          for (let j = 0; j < keywordChars.length; j++) {
+            const card = displayedCards.value[i + j];
+            results.push({
+              type: 'card',
+              index: i + j,
+              card: card,
+              display: `连续模式${keyword}: 第${i + j + 1}张牌 ${card.display}`,
+              isContinuous: true,
+              continuousGroup: i
+            });
+          }
+        }
+      }
+    }
+
+    // 搜索计算结果（如果有的话）
+    if (tableData.value.length > 0) {
+      tableData.value.forEach((result, index) => {
+        const resultText = `${result.zhuang}-${result.xian}-${result.result}`;
+        if (resultText.toLowerCase().includes(keyword)) {
+          results.push({
+            type: 'result',
+            index: index,
+            result: result,
+            display: `第${result.jushu}局: 庄${result.zhuang} 闲${result.xian} ${result.result}`
+          });
+        }
+      });
+    }
+
+    searchResults.value = results;
+    searchLoading.value = false;
+
+    if (results.length === 0) {
+      ElMessage.info('未找到匹配的结果');
+      isSearchMode.value = false;
+    } else {
+      ElMessage.success(`找到 ${results.length} 个匹配结果`);
+    }
+  }, 300);
+};
+
+// 清除搜索
+const clearSearch = () => {
+  searchKeyword.value = '';
+  searchResults.value = [];
+  isSearchMode.value = false;
+};
+
+// 判断某张牌是否在搜索结果中
+const isCardInSearchResults = card => {
+  if (!isSearchMode.value || searchResults.value.length === 0) return false;
+  return searchResults.value.some(
+    result => result.type === 'card' && result.card.id === card.id
+  );
+};
+
+// 判断某张牌是否属于连续模式搜索结果
+const isCardInContinuousSearch = card => {
+  if (!isSearchMode.value || searchResults.value.length === 0) return false;
+  return searchResults.value.some(
+    result =>
+      result.type === 'card' &&
+      result.card.id === card.id &&
+      result.isContinuous
+  );
 };
 
 // 退出登录
@@ -769,6 +1094,20 @@ onMounted(() => {
   border-color: #faad14;
 }
 
+/* 搜索高亮样式 */
+.search-highlight-card {
+  box-shadow: 0 0 0 3px #409eff;
+  border-color: #409eff;
+  background: #e6f7ff;
+}
+
+/* 连续模式搜索高亮样式 */
+.search-highlight-continuous-card {
+  box-shadow: 0 0 0 3px #67c23a;
+  border-color: #67c23a;
+  background: #f0f9ff;
+}
+
 /* 登录界面样式 */
 .login-overlay {
   position: fixed;
@@ -866,5 +1205,59 @@ onMounted(() => {
   font-size: 14px;
   color: #666;
   font-weight: 500;
+}
+
+/* 搜索区域样式 */
+.search-area {
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-input {
+  width: 100%;
+}
+
+/* 编辑弹窗样式 */
+.edit-dialog {
+  :deep(.el-dialog) {
+    margin: 5vh auto !important;
+    max-width: 500px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 20px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 10px 20px 20px;
+  }
+}
+
+.edit-dialog-content {
+  padding: 10px 0;
+}
+
+.edit-textarea {
+  :deep(.el-textarea__inner) {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+
+  .el-button {
+    flex: 1;
+  }
 }
 </style>
